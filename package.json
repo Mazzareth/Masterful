@@ -1,0 +1,11 @@
+{
+  "name": "masterwork",
+  "version": "1.0.0",
+  "description": "Masterwork - Crafting digital excellence",
+  "scripts": {
+    "build": "cd angular-app && npm run build:vercel",
+    "start": "cd angular-app && npm start",
+    "test": "cd angular-app && npm test"
+  },
+  "private": true
+}

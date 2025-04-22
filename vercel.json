@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "angular-app/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/angular-app/browser"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/angular-app/dist/angular-app/browser/assets/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/angular-app/dist/angular-app/browser/favicon.ico"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/angular-app/dist/angular-app/browser/index.html"
+    }
+  ]
+}
