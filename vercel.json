@@ -8,9 +8,17 @@
       "config": {
         "distDir": "dist/masterwork/browser"
       }
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
     {
       "src": "/(assets|favicon.ico|manifest.webmanifest)/(.*)",
       "dest": "/dist/masterwork/browser/$1/$2"
