@@ -54,6 +54,9 @@ export default async function handler(req, res) {
       tags: metadata.tags || []
     };
     
+    // Log the image URL for debugging
+    console.log('Image URL:', image.url);
+    
     return res.status(200).json(image);
   } catch (error) {
     console.error('Error getting image:', error);

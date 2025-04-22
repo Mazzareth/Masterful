@@ -266,4 +266,6 @@ export class ImageboardComponent implements OnInit {
       inputElement.value = originalValue;
     }, 1000);
   }
+  
+
 }

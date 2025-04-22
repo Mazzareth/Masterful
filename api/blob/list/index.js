@@ -46,10 +46,20 @@ export default async function handler(req, res) {
       // Extract metadata from blob
       const metadata = blob.metadata || {};
       
+      // Ensure the URL is properly formatted
+      let imageUrl = blob.url;
+      
+      // Log the blob details for debugging
+      console.log('Blob details:', {
+        pathname: blob.pathname,
+        url: blob.url,
+        contentType: blob.contentType
+      });
+      
       return {
         id: metadata.imageId || blob.pathname,
         name: metadata.name || blob.pathname.split('/').pop(),
-        url: blob.url,
+        url: imageUrl,
         pathname: blob.pathname,
         contentType: blob.contentType,
         size: blob.size,
