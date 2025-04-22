@@ -23,9 +23,19 @@ export class BlobService {
    * @returns An Observable with the blob result
    */
   uploadFile(file: File, filename: string): Observable<PutBlobResult> {
+    console.log('Preparing to upload file:', filename);
+    console.log('File size:', file.size, 'bytes');
+    console.log('File type:', file.type);
+    
     const formData = new FormData();
     formData.append('file', file);
     
-    return this.http.post<PutBlobResult>(`/api/blob/upload?filename=${encodeURIComponent(filename)}`, formData);
+    // Log the FormData contents (for debugging)
+    console.log('FormData created with file appended');
+    
+    return this.http.post<PutBlobResult>(
+      `/api/blob/upload?filename=${encodeURIComponent(filename)}`, 
+      formData
+    );
   }
 }
