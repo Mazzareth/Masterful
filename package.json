@@ -4,7 +4,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "start:prod": "node server.js",
     "build": "ng build",
     "build:vercel": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
