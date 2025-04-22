@@ -56,6 +56,24 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Authentication Setup
+
+The application uses Firebase Authentication for user management. To set up authentication:
+
+1. Create a Firebase project at [https://console.firebase.google.com/](https://console.firebase.google.com/)
+2. Enable Email/Password and Google authentication methods
+3. Create a service account and download the JSON key file
+4. Create a `.env.local` file with the following variables:
+
+```
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=your-service-account-email@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+JWT_SECRET=your_jwt_secret_here
+```
+
+5. Alternatively, you can place the service account JSON file at the root of the project as `firebase-service-account.json`
+
 ## Deployment on Vercel
 
 This project is configured for seamless deployment on Vercel. The repository includes:
@@ -68,7 +86,8 @@ To deploy on Vercel:
 
 1. Connect your GitHub repository to Vercel
 2. Vercel will automatically detect the Angular configuration
-3. Deploy the project
+3. Add the Firebase environment variables in the Vercel project settings
+4. Deploy the project
 
 ## Additional Resources
 

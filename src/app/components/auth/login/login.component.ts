@@ -42,9 +42,21 @@ export class LoginComponent {
 
     this.authService.signIn(email, password)
       .subscribe({
-        next: () => {
-          this.loading = false;
-          this.router.navigate(['/dashboard']);
+        next: async (userCredential) => {
+          try {
+            // Get the ID token
+            const token = await userCredential.user.getIdToken();
+            
+            // Set the token as a cookie
+            document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Strict`;
+            
+            this.loading = false;
+            this.router.navigate(['/dashboard']);
+          } catch (err) {
+            console.error('Error setting token cookie:', err);
+            this.loading = false;
+            this.errorMessage = 'Authentication successful but failed to set session. Please try again.';
+          }
         },
         error: (error) => {
           this.loading = false;
@@ -59,9 +71,21 @@ export class LoginComponent {
 
     this.authService.signInWithGoogle()
       .subscribe({
-        next: () => {
-          this.loading = false;
-          this.router.navigate(['/dashboard']);
+        next: async (userCredential) => {
+          try {
+            // Get the ID token
+            const token = await userCredential.user.getIdToken();
+            
+            // Set the token as a cookie
+            document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Strict`;
+            
+            this.loading = false;
+            this.router.navigate(['/dashboard']);
+          } catch (err) {
+            console.error('Error setting token cookie:', err);
+            this.loading = false;
+            this.errorMessage = 'Authentication successful but failed to set session. Please try again.';
+          }
         },
         error: (error) => {
           this.loading = false;
