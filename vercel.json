@@ -21,11 +21,15 @@
     },
     {
       "src": "/(assets|favicon.ico|manifest.webmanifest)/(.*)",
-      "dest": "/dist/masterwork/browser/$1/$2"
+      "dest": "/$1/$2"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/masterwork/browser/index.html"
+      "dest": "/index.html",
+      "status": 200
     }
   ]
 }

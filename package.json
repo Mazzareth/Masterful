@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:prod": "node server.js",
     "build": "ng build",
     "build:vercel": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
@@ -22,6 +23,7 @@
     "@angular/router": "^19.2.0",
     "@vercel/blob": "^1.0.0",
     "busboy": "^1.6.0",
+    "express": "^5.1.0",
     "firebase": "^11.6.0",
     "firebase-admin": "^13.3.0",
     "formidable": "^3.5.3",
