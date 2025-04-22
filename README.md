@@ -1,4 +1,6 @@
-# AngularApp
+# Masterwork
+
+A sleek, modern Angular application featuring a black and purple design with frosted glass effects. This project showcases a beautiful landing page with animated particles and responsive design.
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.8.
 
@@ -53,6 +55,20 @@ ng e2e
 ```
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Deployment on Vercel
+
+This project is configured for seamless deployment on Vercel. The repository includes:
+
+- `vercel.json` configuration file
+- Custom build scripts for Vercel deployment
+- Proper routing for SPA (Single Page Application)
+
+To deploy on Vercel:
+
+1. Connect your GitHub repository to Vercel
+2. Vercel will automatically detect the Angular configuration
+3. Deploy the project
 
 ## Additional Resources
 
