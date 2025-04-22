@@ -1,6 +1,8 @@
 import { put } from '@vercel/blob';
 import { formidable } from 'formidable';
 import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import { getSession } from '../../auth/session';
 
 // Disable the default body parser to handle the form data manually
 export const config = {
@@ -17,9 +19,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Get user session
+  const session = await getSession(req);
+  if (!session) {
+    console.log('Unauthorized: No valid session');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const { searchParams } = new URL(req.url, `http://${req.headers.host}`);
   const filename = searchParams.get('filename');
+  const customName = searchParams.get('name') || filename;
+  
   console.log('Filename from query params:', filename);
+  console.log('Custom name:', customName);
 
   if (!filename) {
     console.log('No filename provided');
@@ -64,13 +76,31 @@ export default async function handler(req, res) {
     
     // Upload to Vercel Blob
     try {
+      // Generate a unique ID for the image
+      const imageId = uuidv4();
+      
       const blob = await put(filename, fileBuffer, {
         access: 'public',
-        contentType: uploadedFile.mimetype || 'application/octet-stream'
+        contentType: uploadedFile.mimetype || 'application/octet-stream',
+        metadata: {
+          imageId,
+          name: customName,
+          uploadedBy: session.email,
+          uploadedAt: Date.now()
+        }
       });
       
+      // Add additional metadata to the response
+      const enhancedResponse = {
+        ...blob,
+        id: imageId,
+        name: customName,
+        uploadedBy: session.email,
+        uploadedAt: Date.now()
+      };
+      
       console.log('Upload successful, blob URL:', blob.url);
-      return res.status(200).json(blob);
+      return res.status(200).json(enhancedResponse);
     } catch (uploadError) {
       console.error('Error in put operation:', uploadError);
       return res.status(500).json({ 

@@ -27,6 +27,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'imageboard',
+    loadComponent: () => import('./pages/imageboard-page/imageboard-page.component').then(m => m.ImageboardPageComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/'
   }

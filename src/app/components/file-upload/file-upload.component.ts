@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BlobService, PutBlobResult } from '../../services/blob.service';
 
 interface UploadHistoryItem extends PutBlobResult {
@@ -9,7 +10,7 @@ interface UploadHistoryItem extends PutBlobResult {
 @Component({
   selector: 'app-file-upload',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './file-upload.component.html',
   styleUrls: ['./file-upload.component.scss']
 })
@@ -23,6 +24,7 @@ export class FileUploadComponent {
   isDragging = false;
   selectedFile: File | null = null;
   selectedFileName = '';
+  customImageName = '';
   previewUrl: string | null = null;
   isImageFile = false;
   uploadHistory: UploadHistoryItem[] = [];
@@ -99,7 +101,10 @@ export class FileUploadComponent {
     // Set loading state
     this.isUploading = true;
     
-    this.blobService.uploadFile(this.selectedFile, this.selectedFile.name).subscribe({
+    // Use custom name if provided, otherwise use the file name
+    const imageName = this.customImageName.trim() || this.selectedFile.name;
+    
+    this.blobService.uploadFile(this.selectedFile, this.selectedFile.name, imageName).subscribe({
       next: (result) => {
         this.isUploading = false;
         this.blob = result;
@@ -130,6 +135,7 @@ export class FileUploadComponent {
   resetUpload(): void {
     this.selectedFile = null;
     this.selectedFileName = '';
+    this.customImageName = '';
     this.previewUrl = null;
     this.isImageFile = false;
     this.errorMessage = '';

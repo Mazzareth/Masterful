@@ -1,0 +1,260 @@
+<div class="imageboard-container">
+  <div class="imageboard-header">
+    <h1>Image Library</h1>
+    <p class="subtitle">Browse and manage your uploaded images</p>
+  </div>
+  
+  <div class="filter-section">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        placeholder="Search images by name or tags..."
+        (keyup.enter)="applyFilters()"
+      >
+      <button class="btn-search" (click)="applyFilters()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="contentType">Type:</label>
+        <select id="contentType" [(ngModel)]="contentTypeFilter" (change)="applyFilters()">
+          <option *ngFor="let option of contentTypeOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="uploader">Uploader:</label>
+        <input 
+          type="text" 
+          id="uploader" 
+          [(ngModel)]="uploaderFilter" 
+          placeholder="Filter by uploader"
+          (keyup.enter)="applyFilters()"
+        >
+      </div>
+      
+      <div class="filter-group">
+        <label for="sortBy">Sort by:</label>
+        <select id="sortBy" [(ngModel)]="sortBy" (change)="applyFilters()">
+          <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+        <button class="btn-sort-direction" (click)="toggleSortDirection()">
+          <svg *ngIf="sortDirection === 'asc'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+          <svg *ngIf="sortDirection === 'desc'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <polyline points="19 12 12 19 5 12"></polyline>
+          </svg>
+        </button>
+      </div>
+      
+      <button class="btn-reset-filters" (click)="resetFilters()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12a10 10 0 1 1 20 0 10 10 0 0 1-20 0z"></path>
+          <path d="M12 8v8"></path>
+          <path d="M8 12h8"></path>
+        </svg>
+        Reset
+      </button>
+    </div>
+  </div>
+  
+  <div class="loading-indicator" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading images...</p>
+  </div>
+  
+  <div class="error-message" *ngIf="error">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <p>{{ error }}</p>
+  </div>
+  
+  <div class="no-images" *ngIf="!loading && images.length === 0">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+      <polyline points="21 15 16 10 5 21"></polyline>
+    </svg>
+    <h3>No images found</h3>
+    <p>Try adjusting your filters or upload some images</p>
+    <a routerLink="/upload" class="btn-upload-new">Upload Images</a>
+  </div>
+  
+  <div class="image-grid" *ngIf="!loading && images.length > 0">
+    <div class="image-card" *ngFor="let image of images" (click)="viewImageDetails(image)">
+      <div class="image-preview" *ngIf="isImage(image.contentType)">
+        <img [src]="image.url" [alt]="image.name">
+      </div>
+      <div class="file-icon" *ngIf="!isImage(image.contentType)" [ngClass]="getFileIcon(image.contentType)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+      </div>
+      <div class="image-info">
+        <h3 class="image-name">{{ image.name }}</h3>
+        <p class="image-meta">{{ formatFileSize(image.size) }} • {{ formatDate(image.uploadedAt) }}</p>
+        <div class="image-tags" *ngIf="image.tags && image.tags.length > 0">
+          <span class="tag" *ngFor="let tag of image.tags.slice(0, 3)">{{ tag }}</span>
+          <span class="more-tags" *ngIf="image.tags.length > 3">+{{ image.tags.length - 3 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button 
+      class="btn-page" 
+      [disabled]="currentPage === 1"
+      (click)="changePage(currentPage - 1)"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    
+    <button 
+      *ngFor="let page of getPageNumbers()" 
+      class="btn-page" 
+      [class.active]="page === currentPage"
+      (click)="changePage(page)"
+    >
+      {{ page }}
+    </button>
+    
+    <button 
+      class="btn-page" 
+      [disabled]="currentPage === totalPages"
+      (click)="changePage(currentPage + 1)"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </button>
+  </div>
+  
+  <!-- Image Detail Modal -->
+  <div class="image-detail-modal" *ngIf="selectedImage">
+    <div class="modal-backdrop" (click)="closeImageDetails()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ selectedImage.name }}</h2>
+        <button class="btn-close" (click)="closeImageDetails()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="image-preview-large" *ngIf="isImage(selectedImage.contentType)">
+          <img [src]="selectedImage.url" [alt]="selectedImage.name">
+        </div>
+        
+        <div class="file-preview" *ngIf="!isImage(selectedImage.contentType)">
+          <div class="file-icon-large" [ngClass]="getFileIcon(selectedImage.contentType)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </div>
+          <p class="file-name">{{ selectedImage.name }}</p>
+        </div>
+        
+        <div class="image-details">
+          <div class="detail-row">
+            <span class="detail-label">File Name:</span>
+            <span class="detail-value">{{ selectedImage.name }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">File Type:</span>
+            <span class="detail-value">{{ selectedImage.contentType }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">File Size:</span>
+            <span class="detail-value">{{ formatFileSize(selectedImage.size) }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Uploaded By:</span>
+            <span class="detail-value">{{ selectedImage.uploadedBy }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">Upload Date:</span>
+            <span class="detail-value">{{ formatDate(selectedImage.uploadedAt) }}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="detail-label">File URL:</span>
+            <div class="url-box">
+              <input type="text" [value]="selectedImage.url" readonly #urlInput>
+              <button class="btn-copy" (click)="copyToClipboard(urlInput)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tags-section">
+          <h3>Tags</h3>
+          
+          <div class="tags-list" *ngIf="selectedImage.tags && selectedImage.tags.length > 0">
+            <div class="tag" *ngFor="let tag of selectedImage.tags">
+              {{ tag }}
+              <button class="btn-remove-tag" (click)="removeTag(tag)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="no-tags" *ngIf="!selectedImage.tags || selectedImage.tags.length === 0">
+            <p>No tags added yet</p>
+          </div>
+          
+          <div class="add-tag">
+            <input 
+              type="text" 
+              [(ngModel)]="newTag" 
+              placeholder="Add a new tag..."
+              (keyup.enter)="addTag()"
+            >
+            <button class="btn-add-tag" (click)="addTag()" [disabled]="!newTag.trim()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <a [href]="selectedImage.url" target="_blank" class="btn-view">View File</a>
+        <button class="btn-close-modal" (click)="closeImageDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

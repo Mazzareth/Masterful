@@ -53,6 +53,17 @@
       />
     </div>
     
+    <div class="custom-name-input" *ngIf="selectedFile && !isUploading && !blob">
+      <label for="customName">Image Name (optional):</label>
+      <input 
+        type="text" 
+        id="customName" 
+        [(ngModel)]="customImageName" 
+        placeholder="Enter a custom name for this image"
+      >
+      <p class="input-help">Leave blank to use the original filename</p>
+    </div>
+    
     <div class="upload-actions" *ngIf="selectedFile && !isUploading && !blob">
       <button class="btn-cancel" (click)="resetUpload()">Cancel</button>
       <button class="btn-upload" (click)="uploadFile()">Upload File</button>
