@@ -1,101 +1,112 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BlobService, PutBlobResult } from '../../services/blob.service';
+
+interface UploadHistoryItem extends PutBlobResult {
+  timestamp: number;
+}
 
 @Component({
   selector: 'app-file-upload',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div>
-      <h2>Upload File</h2>
-      <form (submit)="onSubmit($event)">
-        <input 
-          type="file" 
-          #fileInput
-          required
-        />
-        <button type="submit" [disabled]="isUploading">
-          {{ isUploading ? 'Uploading...' : 'Upload' }}
-        </button>
-      </form>
-      
-      <div *ngIf="errorMessage" class="error-message">
-        {{ errorMessage }}
-      </div>
-      
-      <div *ngIf="blob" class="success-message">
-        <p>File uploaded successfully!</p>
-        <p>Blob URL: <a [href]="blob.url" target="_blank">{{ blob.url }}</a></p>
-      </div>
-    </div>
-  `,
-  styles: [`
-    div {
-      margin: 20px;
-    }
-    
-    form {
-      margin-bottom: 20px;
-    }
-    
-    input {
-      margin-right: 10px;
-    }
-    
-    .error-message {
-      color: #d9534f;
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #d9534f;
-      border-radius: 4px;
-      background-color: #f9f2f2;
-    }
-    
-    .success-message {
-      color: #5cb85c;
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #5cb85c;
-      border-radius: 4px;
-      background-color: #f2f9f2;
-    }
-  `]
+  templateUrl: './file-upload.component.html',
+  styleUrls: ['./file-upload.component.scss']
 })
 export class FileUploadComponent {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('urlInput') urlInput!: ElementRef<HTMLInputElement>;
+  
   blob: PutBlobResult | null = null;
   isUploading = false;
   errorMessage = '';
+  isDragging = false;
+  selectedFile: File | null = null;
+  selectedFileName = '';
+  previewUrl: string | null = null;
+  isImageFile = false;
+  uploadHistory: UploadHistoryItem[] = [];
   
-  constructor(private blobService: BlobService) {}
+  constructor(private blobService: BlobService) {
+    // Load upload history from localStorage
+    this.loadUploadHistory();
+  }
   
-  onSubmit(event: Event): void {
+  onDragOver(event: DragEvent): void {
     event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+  
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+  
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
     
-    // Reset state
+    if (event.dataTransfer?.files.length) {
+      this.handleFileSelection(event.dataTransfer.files[0]);
+    }
+  }
+  
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    
+    if (input.files?.length) {
+      this.handleFileSelection(input.files[0]);
+    }
+  }
+  
+  handleFileSelection(file: File): void {
+    // Reset error state
     this.errorMessage = '';
-    this.blob = null;
     
-    const fileInput = (event.target as HTMLFormElement).querySelector('input[type="file"]') as HTMLInputElement;
+    // Check file size (4.5MB limit)
+    if (file.size > 4.5 * 1024 * 1024) {
+      this.errorMessage = 'File size exceeds the 4.5MB limit. Please select a smaller file.';
+      return;
+    }
     
-    if (!fileInput?.files?.length) {
+    this.selectedFile = file;
+    this.selectedFileName = file.name;
+    
+    // Check if it's an image file
+    this.isImageFile = file.type.startsWith('image/');
+    
+    // Create preview for images
+    if (this.isImageFile) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.previewUrl = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.previewUrl = 'file-icon';
+    }
+  }
+  
+  uploadFile(): void {
+    if (!this.selectedFile) {
       this.errorMessage = 'Please select a file';
       return;
     }
     
-    const file = fileInput.files[0];
-    console.log('Selected file:', file.name);
-    console.log('File size:', file.size, 'bytes');
-    console.log('File type:', file.type);
-    
     // Set loading state
     this.isUploading = true;
     
-    this.blobService.uploadFile(file, file.name).subscribe({
+    this.blobService.uploadFile(this.selectedFile, this.selectedFile.name).subscribe({
       next: (result) => {
         this.isUploading = false;
         this.blob = result;
         console.log('Upload successful:', result);
+        
+        // Add to upload history
+        this.addToUploadHistory(result);
       },
       error: (error) => {
         this.isUploading = false;
@@ -114,5 +125,98 @@ export class FileUploadComponent {
         this.errorMessage = errorMessage || 'Upload failed. Please try again.';
       }
     });
+  }
+  
+  resetUpload(): void {
+    this.selectedFile = null;
+    this.selectedFileName = '';
+    this.previewUrl = null;
+    this.isImageFile = false;
+    this.errorMessage = '';
+    this.blob = null;
+    
+    // Reset file input
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
+  }
+  
+  copyToClipboard(inputElement: HTMLInputElement): void {
+    inputElement.select();
+    document.execCommand('copy');
+    
+    // Show a temporary tooltip or notification
+    const originalText = inputElement.value;
+    inputElement.value = 'Copied!';
+    setTimeout(() => {
+      inputElement.value = originalText;
+    }, 1000);
+  }
+  
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+  
+  formatDate(timestamp: number): string {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  }
+  
+  getFileNameFromUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      return decodeURIComponent(pathParts[pathParts.length - 1]);
+    } catch (e) {
+      return url;
+    }
+  }
+  
+  isImageType(contentType: string): boolean {
+    return contentType.startsWith('image/');
+  }
+  
+  private addToUploadHistory(result: PutBlobResult): void {
+    const historyItem: UploadHistoryItem = {
+      ...result,
+      timestamp: Date.now()
+    };
+    
+    // Add to the beginning of the array
+    this.uploadHistory.unshift(historyItem);
+    
+    // Keep only the last 5 items
+    if (this.uploadHistory.length > 5) {
+      this.uploadHistory = this.uploadHistory.slice(0, 5);
+    }
+    
+    // Save to localStorage
+    this.saveUploadHistory();
+  }
+  
+  private loadUploadHistory(): void {
+    try {
+      const history = localStorage.getItem('uploadHistory');
+      if (history) {
+        this.uploadHistory = JSON.parse(history);
+      }
+    } catch (e) {
+      console.error('Error loading upload history:', e);
+      this.uploadHistory = [];
+    }
+  }
+  
+  private saveUploadHistory(): void {
+    try {
+      localStorage.setItem('uploadHistory', JSON.stringify(this.uploadHistory));
+    } catch (e) {
+      console.error('Error saving upload history:', e);
+    }
   }
 }
