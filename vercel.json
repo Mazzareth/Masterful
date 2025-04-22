@@ -1,26 +1,23 @@
 {
   "version": 2,
+  "public": true,
   "builds": [
     {
-      "src": "angular-app/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/angular-app/browser"
+        "distDir": "dist/masterwork/browser"
       }
     }
   ],
   "routes": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/angular-app/dist/angular-app/browser/assets/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/angular-app/dist/angular-app/browser/favicon.ico"
+      "src": "/(assets|favicon.ico|manifest.webmanifest)/(.*)",
+      "dest": "/dist/masterwork/browser/$1/$2"
     },
     {
       "src": "/(.*)",
-      "dest": "/angular-app/dist/angular-app/browser/index.html"
+      "dest": "/dist/masterwork/browser/index.html"
     }
   ]
 }
