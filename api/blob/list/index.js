@@ -56,12 +56,31 @@ export default async function handler(req, res) {
         contentType: blob.contentType
       });
       
+      // Determine content type based on file extension if not available
+      let contentType = blob.contentType;
+      if (!contentType) {
+        const fileName = blob.pathname.toLowerCase();
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+        } else if (fileName.endsWith('.png')) {
+          contentType = 'image/png';
+        } else if (fileName.endsWith('.gif')) {
+          contentType = 'image/gif';
+        } else if (fileName.endsWith('.pdf')) {
+          contentType = 'application/pdf';
+        } else if (fileName.endsWith('.mp4')) {
+          contentType = 'video/mp4';
+        } else if (fileName.endsWith('.mp3')) {
+          contentType = 'audio/mpeg';
+        }
+      }
+      
       return {
         id: metadata.imageId || blob.pathname,
         name: metadata.name || blob.pathname.split('/').pop(),
         url: imageUrl,
         pathname: blob.pathname,
-        contentType: blob.contentType,
+        contentType: contentType,
         size: blob.size,
         uploadedBy: metadata.uploadedBy || 'unknown',
         uploadedAt: metadata.uploadedAt || blob.uploadedAt || 0,

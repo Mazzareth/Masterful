@@ -3,7 +3,7 @@ export interface Image {
   name: string;
   url: string;
   pathname: string;
-  contentType: string;
+  contentType?: string;
   size: number;
   uploadedBy: string;
   uploadedAt: number;

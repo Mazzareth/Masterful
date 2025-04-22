@@ -206,11 +206,15 @@ export class ImageboardComponent implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  isImage(contentType: string): boolean {
-    return contentType.startsWith('image/');
+  isImage(contentType: string | undefined): boolean {
+    return contentType ? contentType.startsWith('image/') : false;
   }
 
-  getFileIcon(contentType: string): string {
+  getFileIcon(contentType: string | undefined): string {
+    if (!contentType) {
+      return 'file';
+    }
+    
     if (contentType.startsWith('image/')) {
       return 'image';
     } else if (contentType.startsWith('video/')) {
