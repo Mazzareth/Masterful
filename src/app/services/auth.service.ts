@@ -9,9 +9,11 @@ import {
   UserCredential,
   User,
   onAuthStateChanged,
-  onIdTokenChanged
+  onIdTokenChanged,
+  authState
 } from '@angular/fire/auth';
-import { BehaviorSubject, Observable, from } from 'rxjs';
+import { BehaviorSubject, Observable, from, of, firstValueFrom } from 'rxjs';
+import { map, take, tap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -20,11 +22,13 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private tokenRefreshInterval: any;
+  private authStateReady = false;
 
   constructor(private auth: Auth) {
     // Listen for auth state changes
     onAuthStateChanged(this.auth, (user) => {
       this.currentUserSubject.next(user);
+      this.authStateReady = true;
       
       if (user) {
         this.startTokenRefresh();
@@ -101,8 +105,24 @@ export class AuthService {
     return this.auth.currentUser;
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated synchronously
+  // This is used for quick checks but may not be accurate on page load
   isAuthenticated(): boolean {
     return !!this.auth.currentUser;
+  }
+  
+  // Check if user is authenticated asynchronously
+  // This is more reliable, especially on page load/refresh
+  isAuthenticatedAsync(): Observable<boolean> {
+    // If auth state is already initialized, we can use the current value
+    if (this.authStateReady) {
+      return of(!!this.auth.currentUser);
+    }
+    
+    // Otherwise, wait for the auth state to be determined
+    return authState(this.auth).pipe(
+      take(1),
+      map(user => !!user)
+    );
   }
 }
