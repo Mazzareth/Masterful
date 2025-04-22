@@ -1,5 +1,5 @@
 import { put } from '@vercel/blob';
-import formidable from 'formidable';
+import { formidable } from 'formidable';
 import fs from 'fs';
 
 // Disable the default body parser to handle the form data manually
@@ -30,22 +30,20 @@ export default async function handler(req, res) {
 
   try {
     // Use formidable to parse the multipart form data
-    const form = new formidable.IncomingForm();
+    const form = formidable({
+      keepExtensions: true,
+      multiples: true,
+    });
     
     // Parse the form
-    const [fields, files] = await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        resolve([fields, files]);
-      });
-    });
+    const [fields, files] = await form.parse(req);
     
     console.log('Form fields:', fields);
     console.log('Files received:', Object.keys(files));
     
     // Check if we have a file
     const fileField = files.file;
-    if (!fileField || !fileField[0]) {
+    if (!fileField || fileField.length === 0) {
       console.log('No file found in the request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
