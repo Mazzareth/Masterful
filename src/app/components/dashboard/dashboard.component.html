@@ -1,0 +1,16 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Welcome to Masterful</h1>
+    <button class="btn-logout" (click)="logout()" [disabled]="loading">
+      {{ loading ? 'Logging out...' : 'Logout' }}
+    </button>
+  </div>
+  
+  <div class="dashboard-content">
+    <div class="welcome-card">
+      <h2>Hello, {{ userEmail }}</h2>
+      <p>You have successfully logged in to the Masterful application.</p>
+      <p>This is a protected dashboard page that only authenticated users can access.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,82 @@
+<div class="signup-container">
+  <div class="signup-card">
+    <h2>Sign Up</h2>
+    
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+    
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="Enter your email"
+          [ngClass]="{'invalid': email?.invalid && (email?.dirty || email?.touched)}"
+        >
+        <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="error-text">
+          <span *ngIf="email?.errors?.['required']">Email is required</span>
+          <span *ngIf="email?.errors?.['email']">Please enter a valid email</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          placeholder="Enter your password"
+          [ngClass]="{'invalid': password?.invalid && (password?.dirty || password?.touched)}"
+        >
+        <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="error-text">
+          <span *ngIf="password?.errors?.['required']">Password is required</span>
+          <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input 
+          type="password" 
+          id="confirmPassword" 
+          formControlName="confirmPassword" 
+          placeholder="Confirm your password"
+          [ngClass]="{'invalid': confirmPassword?.invalid && (confirmPassword?.dirty || confirmPassword?.touched)}"
+        >
+        <div *ngIf="confirmPassword?.invalid && (confirmPassword?.dirty || confirmPassword?.touched)" class="error-text">
+          <span *ngIf="confirmPassword?.errors?.['required']">Please confirm your password</span>
+          <span *ngIf="confirmPassword?.errors?.['passwordMismatch']">Passwords do not match</span>
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        class="btn-primary" 
+        [disabled]="signupForm.invalid || loading"
+      >
+        {{ loading ? 'Creating account...' : 'Sign Up' }}
+      </button>
+    </form>
+    
+    <div class="divider">
+      <span>OR</span>
+    </div>
+    
+    <button 
+      type="button" 
+      class="btn-google" 
+      (click)="signUpWithGoogle()" 
+      [disabled]="loading"
+    >
+      <span class="google-icon">G</span>
+      {{ loading ? 'Signing up...' : 'Sign up with Google' }}
+    </button>
+    
+    <div class="login-link">
+      Already have an account? <a [routerLink]="['/login']">Login</a>
+    </div>
+  </div>
+</div>
