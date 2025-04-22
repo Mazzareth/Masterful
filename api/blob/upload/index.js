@@ -1,8 +1,13 @@
 import { put } from '@vercel/blob';
-import { createReadStream } from 'fs';
-import { pipeline } from 'stream/promises';
-import { Readable } from 'stream';
-import busboy from 'busboy';
+import formidable from 'formidable';
+import fs from 'fs';
+
+// Disable the default body parser to handle the form data manually
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function handler(req, res) {
   console.log('Received upload request');
@@ -24,58 +29,69 @@ export default async function handler(req, res) {
   console.log('Content-Type:', req.headers['content-type']);
 
   try {
-    // Parse the multipart form data
-    const bb = busboy({ headers: req.headers });
-    let fileBuffer = null;
-
-    bb.on('file', async (fieldname, file, info) => {
-      console.log('Received file with fieldname:', fieldname);
-      console.log('File info:', info);
-      
-      // Only process the file if the fieldname is 'file'
-      if (fieldname === 'file') {
-        const chunks = [];
-        for await (const chunk of file) {
-          chunks.push(chunk);
-        }
-        fileBuffer = Buffer.concat(chunks);
-        console.log('File buffer created, size:', fileBuffer.length);
-      } else {
-        console.log('Ignoring file with fieldname:', fieldname);
-        // Consume the file stream to prevent memory leaks
-        for await (const chunk of file) {
-          // Discard chunk
-        }
-      }
+    // Use formidable to parse the multipart form data
+    const form = new formidable.IncomingForm();
+    
+    // Parse the form
+    const [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        resolve([fields, files]);
+      });
     });
-
-    await new Promise((resolve, reject) => {
-      bb.on('close', resolve);
-      bb.on('error', reject);
-      req.pipe(bb);
-    });
-
-    if (!fileBuffer) {
-      console.log('No file buffer created after processing');
+    
+    console.log('Form fields:', fields);
+    console.log('Files received:', Object.keys(files));
+    
+    // Check if we have a file
+    const fileField = files.file;
+    if (!fileField || !fileField[0]) {
+      console.log('No file found in the request');
       return res.status(400).json({ error: 'No file uploaded' });
     }
-
+    
+    const uploadedFile = fileField[0];
+    console.log('File details:', {
+      originalFilename: uploadedFile.originalFilename,
+      mimetype: uploadedFile.mimetype,
+      size: uploadedFile.size,
+      filepath: uploadedFile.filepath
+    });
+    
+    // Read the file from disk
+    const fileBuffer = fs.readFileSync(uploadedFile.filepath);
+    console.log('File buffer created, size:', fileBuffer.length);
+    
     console.log('Uploading file to Vercel Blob:', filename);
     
     // Upload to Vercel Blob
     try {
       const blob = await put(filename, fileBuffer, {
         access: 'public',
+        contentType: uploadedFile.mimetype || 'application/octet-stream'
       });
       
       console.log('Upload successful, blob URL:', blob.url);
       return res.status(200).json(blob);
     } catch (uploadError) {
       console.error('Error in put operation:', uploadError);
-      return res.status(500).json({ error: 'Failed to upload to Vercel Blob', details: uploadError.message });
+      return res.status(500).json({ 
+        error: 'Failed to upload to Vercel Blob', 
+        details: uploadError.message 
+      });
+    } finally {
+      // Clean up the temp file
+      try {
+        fs.unlinkSync(uploadedFile.filepath);
+      } catch (cleanupError) {
+        console.error('Error cleaning up temp file:', cleanupError);
+      }
     }
   } catch (error) {
-    console.error('Error uploading to Vercel Blob:', error);
-    return res.status(500).json({ error: 'Failed to upload file' });
+    console.error('Error processing upload:', error);
+    return res.status(500).json({ 
+      error: 'Failed to process upload', 
+      details: error.message 
+    });
   }
 }
