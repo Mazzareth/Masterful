@@ -13,7 +13,7 @@
     
     <div class="user-section">
       <div class="user-info">
-        <div class="user-avatar">{{ userEmail?.charAt(0).toUpperCase() || 'U' }}</div>
+        <div class="user-avatar">{{ userEmail ? userEmail.charAt(0).toUpperCase() : 'U' }}</div>
         <span class="user-email">{{ userEmail || 'User' }}</span>
       </div>
       <button class="btn-logout" (click)="logout()" [disabled]="loading">
