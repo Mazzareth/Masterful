@@ -59,6 +59,10 @@ export default async function handler(req, res) {
           tags: updatedTags
         };
         
+        // Log the updated metadata for debugging
+        console.log('Original metadata:', metadata);
+        console.log('Updated metadata:', updatedMetadata);
+        
         // Download the file
         const fileBuffer = await downloadFile(matchingBlob.url);
         

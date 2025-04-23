@@ -75,6 +75,9 @@ export default async function handler(req, res) {
         }
       }
       
+      // Log metadata for debugging
+      console.log('Blob metadata:', metadata);
+      
       return {
         id: metadata.imageId || blob.pathname,
         name: metadata.name || blob.pathname.split('/').pop(),

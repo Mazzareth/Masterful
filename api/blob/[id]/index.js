@@ -41,6 +41,9 @@ export default async function handler(req, res) {
     // Extract metadata from blob
     const metadata = matchingBlob.metadata || {};
     
+    // Log metadata for debugging
+    console.log('Retrieved blob metadata:', metadata);
+    
     // Transform blob to include metadata
     const image = {
       id: metadata.imageId || matchingBlob.pathname,

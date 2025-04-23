@@ -79,15 +79,19 @@ export default async function handler(req, res) {
       // Generate a unique ID for the image
       const imageId = uuidv4();
       
+      // Initialize with empty tags array
+      const metadata = {
+        imageId,
+        name: customName,
+        uploadedBy: session.email,
+        uploadedAt: Date.now(),
+        tags: [] // Initialize with empty tags array
+      };
+
       const blob = await put(filename, fileBuffer, {
         access: 'public',
         contentType: uploadedFile.mimetype || 'application/octet-stream',
-        metadata: {
-          imageId,
-          name: customName,
-          uploadedBy: session.email,
-          uploadedAt: Date.now()
-        }
+        metadata: metadata
       });
       
       // Add additional metadata to the response
@@ -96,7 +100,8 @@ export default async function handler(req, res) {
         id: imageId,
         name: customName,
         uploadedBy: session.email,
-        uploadedAt: Date.now()
+        uploadedAt: Date.now(),
+        tags: [] // Initialize with empty tags array
       };
       
       console.log('Upload successful, blob URL:', blob.url);
